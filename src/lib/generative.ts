@@ -1,4 +1,4 @@
-// Seeded generative-content generator (Phase 4): the second content type.
+// Seeded generative-content generator: the second content type, alongside text.
 // Every visual is derived from a seed, so every reveal is unique in principle,
 // but reproducible (the report can cite "reveal #N was seed S"). The shake
 // energy that developed the visual weights its composition — a violent ritual

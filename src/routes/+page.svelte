@@ -51,7 +51,7 @@
 		lastMagnitude = magnitude;
 		hue = (hue + 47) % 360; // rotate background hue on every detected shake
 
-		// revealed is a RESTING state (user decision after Phase 5 testing):
+		// revealed is a RESTING state (user decision after device testing):
 		// accidental extra shakes must not destroy the revealed photograph —
 		// only the "next photograph" button leaves it
 		if (stage === 'revealed') return;
@@ -208,7 +208,7 @@
 					{stage === 'idle' ? 'tap to reveal' : stage === 'developing' ? 'tap to develop' : 'next photograph'}
 				</button>
 			{:else if stage === 'idle'}
-				<!-- onboarding (Phase 5): one line, self-explanatory for a stranger -->
+				<!-- onboarding: one line, self-explanatory for a stranger -->
 				<p class="animate-pulse text-sm text-neutral-400">shake your phone to develop a photograph</p>
 			{/if}
 		</div>

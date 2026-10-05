@@ -1,8 +1,8 @@
 <script lang="ts">
 	// The iOS permission gate: shown until motion permission is granted; the
 	// actual permission call lives in the parent (page) via `onclick` so this
-	// stays purely presentational. `onFallback` (Phase 5) offers the tap-to-reveal
-	// path — the permission-denied / accessibility fallback per spec §2.1.
+	// stays purely presentational. `onFallback` offers the tap-to-reveal
+	// path — the permission-denied / accessibility fallback (spec §2.1).
 	interface Props {
 		busy?: boolean;
 		denied?: boolean;
