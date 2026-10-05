@@ -33,7 +33,8 @@
 	// a rescue path so a lone shake eventually resolves instead of freezing
 	let stage = $state<RevealStage>('idle');
 	let progress = $state(0);
-	let impulseBase = $state(0.25); // progress a standard shake deposits
+	let impulseBase = $state(0.16); // progress per shake (tuned up from 0.25: more shakes per reveal)
+	let energyBonus = $state(0.2); // extra impulse for high-energy shakes
 	let driftPerSecond = $state(0.05); // passive rescue drift while developing
 	let driftTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -54,7 +55,7 @@
 			stage = 'developing';
 		}
 		const energy = Math.min(1, Math.max(0, (magnitude - threshold) / threshold));
-		progress = Math.min(1, progress + impulseBase + energy * 0.35);
+		progress = Math.min(1, progress + impulseBase + energy * energyBonus);
 		if (progress >= 1) stage = 'revealed';
 	}
 
