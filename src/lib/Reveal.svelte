@@ -5,8 +5,11 @@
 	// physical effort. A pale emulsion layer fades out with the same progress, so
 	// the image appears to surface from beneath the undeveloped emulsion. A short
 	// CSS transition smooths each impulse into continuous motion.
+	import { makeVisual } from '#lib/generative';
+	import type { RevealItem } from '#lib/reveal';
+
 	interface Props {
-		item: string | null; // null = nothing revealed yet
+		item: RevealItem | null; // null = nothing revealed yet
 		progress: number; // 0 → 1, driven by shakes
 	}
 	let { item, progress }: Props = $props();
@@ -26,11 +29,23 @@
 			class="pointer-events-none absolute inset-0 rounded-sm bg-[#ddd8d0]"
 			style="opacity: {paleOpacity}; transition: opacity 350ms ease-out"
 		></div>
-		<div class="relative">
+		<div class="absolute inset-0 flex items-center justify-center p-6">
 			{#if item !== null}
-				<p class="font-serif text-lg leading-snug text-neutral-100 italic" style={itemStyle}>
-					{item}
-				</p>
+				{#if item.type === 'visual'}
+					<!-- generated visual: the SVG fills the inner surface; @html is safe
+					     here — makeVisual() output is built entirely in code, never from
+					     user input -->
+					<div class="absolute inset-0" style={itemStyle}>
+						<!-- no-at-html-tags is disabled for this file in eslint.config.js:
+						     makeVisual output is built entirely in code (never from user
+						     input), so the injected markup is trusted by construction -->
+						{@html makeVisual(item.seed, item.energy)}
+					</div>
+				{:else}
+					<p class="font-serif text-lg leading-snug text-neutral-100 italic" style={itemStyle}>
+						{item.text}
+					</p>
+				{/if}
 			{:else}
 				<p class="text-sm text-neutral-600 select-none">shake to reveal</p>
 			{/if}
