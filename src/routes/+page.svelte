@@ -12,7 +12,7 @@
 	import PermissionGate from '#lib/PermissionGate.svelte';
 	import Reveal from '#lib/Reveal.svelte';
 
-	type PermissionState = 'starting' | 'gate' | 'ready' | 'denied' | 'unavailable';
+	type PermissionState = 'starting' | 'gate' | 'ready' | 'denied' | 'unavailable' | 'taps';
 	let screen = $state<PermissionState>('starting');
 
 	// --- shake detection wiring ---
@@ -96,6 +96,17 @@
 		handleShake(99);
 	}
 
+	// tap fallback (spec §2.1): the granted-free path when motion permission is
+	// denied or absent — a tap acts as a shake at "mid" energy (threshold × 1.5
+	// keeps the same impulse/energy scaling, so the ritual feels identical)
+	function startTapMode() {
+		screen = 'taps';
+	}
+
+	function handleTap() {
+		handleShake(threshold * 1.5);
+	}
+
 	onMount(() => {
 		devMode = new URLSearchParams(window.location.search).get('dev') === 'true';
 		const paramThreshold = Number(new URLSearchParams(window.location.search).get('t'));
@@ -144,17 +155,37 @@
 				busy={false}
 				denied={screen === 'denied'}
 				onclick={enableMotion}
+				onFallback={startTapMode}
 			/>
 		</div>
 	{:else if screen === 'unavailable'}
 		<div class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
 			<p class="text-lg text-neutral-300">Motion sensing isn't available here</p>
-			<p class="text-sm text-neutral-500">Open Shakeroid on a phone instead.</p>
+			<p class="text-sm text-neutral-500">Open Shakeroid on a phone instead — or tap below.</p>
+			<button
+				type="button"
+				class="mt-2 rounded-full bg-neutral-100 px-8 py-4 text-base font-semibold text-neutral-900 active:scale-95"
+				onclick={startTapMode}
+			>
+				tap to reveal instead
+			</button>
 		</div>
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<Reveal item={currentItem} {progress} />
+			<Reveal item={currentItem} {progress} {stage} />
+			{#if screen === 'taps'}
+				<button
+					type="button"
+					class="rounded-full bg-neutral-100 px-8 py-4 text-base font-semibold text-neutral-900 active:scale-95"
+					onclick={handleTap}
+				>
+					{stage === 'idle' ? 'tap to reveal' : 'tap to develop'}
+				</button>
+			{:else if stage === 'idle'}
+				<!-- onboarding (Phase 5): one line, self-explanatory for a stranger -->
+				<p class="animate-pulse text-sm text-neutral-400">shake your phone to develop a photograph</p>
+			{/if}
 		</div>
 	{/if}
 

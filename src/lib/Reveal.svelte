@@ -6,13 +6,16 @@
 	// the image appears to surface from beneath the undeveloped emulsion. A short
 	// CSS transition smooths each impulse into continuous motion.
 	import { makeVisual } from '#lib/generative';
-	import type { RevealItem } from '#lib/reveal';
+	import type { RevealItem, RevealStage } from '#lib/reveal';
 
 	interface Props {
 		item: RevealItem | null; // null = nothing revealed yet
 		progress: number; // 0 → 1, driven by shakes
+		stage?: RevealStage; // caption microcopy follows the ritual stage
 	}
-	let { item, progress }: Props = $props();
+	let { item, progress, stage = 'idle' }: Props = $props();
+
+	const caption = $derived(stage === 'developing' ? 'developing…' : '');
 
 	const itemStyle = $derived(
 		`transition: opacity 350ms ease-out, filter 350ms ease-out; opacity: ${(0.1 + 0.9 * progress).toFixed(3)}; filter: blur(${(8 * (1 - progress)).toFixed(2)}px) saturate(${(0.25 + 0.75 * progress).toFixed(2)});`
@@ -51,6 +54,9 @@
 			{/if}
 		</div>
 	</div>
-	<!-- caption band (empty for now) -->
-	<div class="h-14"></div>
+	<!-- caption band: like the handwritten note on a Polaroid, it tells the
+	     stranger what the ritual expects of them at each moment -->
+	<div class="h-14 flex items-center justify-center">
+		<p class="text-xs text-neutral-400 italic select-none">{caption}</p>
+	</div>
 </div>
