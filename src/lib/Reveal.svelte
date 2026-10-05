@@ -16,7 +16,7 @@
 	}
 	let { item, progress, stage = 'idle', onNext }: Props = $props();
 
-	const caption = $derived(stage === 'developing' ? 'developing…' : '');
+	const caption = $derived(stage === 'developing' ? 'keep shaking…' : '');
 
 	const itemStyle = $derived(
 		`transition: opacity 350ms ease-out, filter 350ms ease-out; opacity: ${(0.1 + 0.9 * progress).toFixed(3)}; filter: blur(${(8 * (1 - progress)).toFixed(2)}px) saturate(${(0.25 + 0.75 * progress).toFixed(2)});`
