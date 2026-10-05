@@ -7,7 +7,10 @@
 		startShakeDetection,
 		type MotionSample
 	} from '#lib/shakeDetector';
+	import { makePool, createShuffleBag } from '#lib/reveal';
+	import contentPool from '#lib/contentPool.json';
 	import PermissionGate from '#lib/PermissionGate.svelte';
+	import Reveal from '#lib/Reveal.svelte';
 
 	type PermissionState = 'starting' | 'gate' | 'ready' | 'denied' | 'unavailable';
 	let screen = $state<PermissionState>('starting');
@@ -18,8 +21,12 @@
 	let lastSample = $state<MotionSample | null>(null);
 	let sampleCount = $state(0);
 
-	// the phone visibly "knows" it was shaken (proof of the core mechanic)
+	// the phone visibly "knows" it was shaken: ambient background responds
 	let hue = $state(0);
+
+	// --- reveal engine (static swap for now; animation pass wraps later) ---
+	const bag = createShuffleBag(makePool(contentPool.items));
+	let currentItem = $state<string | null>(null);
 
 	// --- dev harness (?dev=true + ?t=<threshold>) ---
 	let devMode = $state(false);
@@ -31,6 +38,7 @@
 		shakeCount++;
 		lastMagnitude = magnitude;
 		hue = (hue + 47) % 360; // rotate background hue on every detected shake
+		currentItem = bag.drawNext().text;
 	}
 
 	function restartDetection() {
@@ -110,22 +118,7 @@
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<!-- temporary placeholder: the real Polaroid frame + reveal replaces this.
-			     For now, the proof point is that the phone visibly reacts to a shake. -->
-			<div
-				class="flex aspect-[3/4] w-full max-w-xs items-center justify-center rounded-lg border border-neutral-700/60 bg-neutral-900/60 text-center text-sm text-neutral-500"
-			>
-				{#if screen === 'starting'}
-					Loading…
-				{:else}
-					Shake me →
-				{/if}
-			</div>
-			{#if shakeCount > 0}
-				<p class="text-sm text-neutral-400">
-					shakes detected: <span class="font-semibold text-neutral-100">{shakeCount}</span>
-				</p>
-			{/if}
+			<Reveal item={currentItem} />
 		</div>
 	{/if}
 
@@ -145,6 +138,7 @@
 				<span>magnitude: {lastSample ? lastSample.magnitude.toFixed(1) : '—'}</span>
 				<span>last shake: {lastMagnitude ?? '—'}</span>
 				<span>shakes: {shakeCount}</span>
+				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length}</span>
 			</div>
 			<label class="mt-2 flex items-center gap-2">
 				threshold: <span class="font-mono">{threshold}</span> m/s²
