@@ -7,7 +7,7 @@
 		startShakeDetection,
 		type MotionSample
 	} from '#lib/shakeDetector';
-	import { makePool, createShuffleBag } from '#lib/reveal';
+	import { makePool, createShuffleBag, type RevealStage } from '#lib/reveal';
 	import contentPool from '#lib/contentPool.json';
 	import PermissionGate from '#lib/PermissionGate.svelte';
 	import Reveal from '#lib/Reveal.svelte';
@@ -24,9 +24,21 @@
 	// the phone visibly "knows" it was shaken: ambient background responds
 	let hue = $state(0);
 
-	// --- reveal engine (static swap for now; animation pass wraps later) ---
+	// --- reveal engine ---
 	const bag = createShuffleBag(makePool(contentPool.items));
 	let currentItem = $state<string | null>(null);
+
+	// the "developing" ritual: flash → emerge → revealed; shakes are locked while
+	// a reveal is in flight (one ritual at a time — deliberate tunable)
+	let stage = $state<RevealStage>('idle');
+	let blankMs = $state(800);
+	let emergeMs = $state(2000);
+	let stageTimers: ReturnType<typeof setTimeout>[] = [];
+
+	function clearStageTimers() {
+		for (const t of stageTimers) clearTimeout(t);
+		stageTimers = [];
+	}
 
 	// --- dev harness (?dev=true + ?t=<threshold>) ---
 	let devMode = $state(false);
@@ -35,10 +47,18 @@
 	let stopDetection: (() => void) | null = null;
 
 	function handleShake(magnitude: number) {
+		if (stage === 'flash' || stage === 'emerge') return; // ritual locked
 		shakeCount++;
 		lastMagnitude = magnitude;
 		hue = (hue + 47) % 360; // rotate background hue on every detected shake
+
 		currentItem = bag.drawNext().text;
+		stage = 'flash';
+		clearStageTimers();
+		stageTimers.push(
+			setTimeout(() => (stage = 'emerge'), blankMs),
+			setTimeout(() => (stage = 'revealed'), blankMs + emergeMs)
+		);
 	}
 
 	function restartDetection() {
@@ -92,6 +112,7 @@
 
 	$effect(() => {
 		return () => {
+			clearStageTimers();
 			stopDetection?.();
 			stopDetection = null;
 		};
@@ -118,7 +139,7 @@
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<Reveal item={currentItem} />
+			<Reveal item={currentItem} {stage} {emergeMs} />
 		</div>
 	{/if}
 
@@ -138,11 +159,19 @@
 				<span>magnitude: {lastSample ? lastSample.magnitude.toFixed(1) : '—'}</span>
 				<span>last shake: {lastMagnitude ?? '—'}</span>
 				<span>shakes: {shakeCount}</span>
-				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length}</span>
+				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length} · stage: {stage}</span>
 			</div>
 			<label class="mt-2 flex items-center gap-2">
 				threshold: <span class="font-mono">{threshold}</span> m/s²
 				<input class="w-40 accent-neutral-100" type="range" min="5" max="30" step="1" bind:value={threshold} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				blank hold: <span class="font-mono">{blankMs}</span> ms
+				<input class="w-40 accent-neutral-100" type="range" min="300" max="1200" step="100" bind:value={blankMs} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				emerge length: <span class="font-mono">{emergeMs}</span> ms
+				<input class="w-40 accent-neutral-100" type="range" min="600" max="4000" step="200" bind:value={emergeMs} />
 			</label>
 		</aside>
 	{/if}

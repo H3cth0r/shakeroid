@@ -6,6 +6,15 @@
 export type TextItem = { type: 'text'; text: string };
 export type RevealItem = TextItem; // future: { type: 'visual' | 'image', ... }
 
+/**
+ * Stages of the "developing" ritual (see Reveal.svelte):
+ *  idle     → no reveal in flight
+ *  flash    → item drawn but hidden; surface flashes pale (the blank Polaroid)
+ *  emerge   → item transitions from ghost → clear over emergeMs (the chemistry)
+ *  revealed → locked-in; shakes are accepted again
+ */
+export type RevealStage = 'idle' | 'flash' | 'emerge' | 'revealed';
+
 export interface ContentPool {
 	items: RevealItem[];
 }
