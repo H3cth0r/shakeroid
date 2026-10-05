@@ -18,7 +18,7 @@
 	let lastSample = $state<MotionSample | null>(null);
 	let sampleCount = $state(0);
 
-	// phase-1 milestone: the phone visibly "knows" it was shaken
+	// the phone visibly "knows" it was shaken (proof of the core mechanic)
 	let hue = $state(0);
 
 	// --- dev harness (?dev=true + ?t=<threshold>) ---
@@ -56,8 +56,8 @@
 	}
 
 	function simulateShake() {
-		// dev-harness only: fires the shake handler directly, so phases 2-3 can be
-		// built locally without a phone (context guide §8)
+		// dev-harness only: fires the shake handler directly, so the reveal UI can
+		// be built locally without a phone (context guide §8)
 		handleShake(99);
 	}
 
@@ -110,8 +110,8 @@
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<!-- Phase 2 replaces this placeholder with the real Polaroid frame + reveal.
-			     Phase 1 proof only: the phone visibly reacts to a shake. -->
+			<!-- temporary placeholder: the real Polaroid frame + reveal replaces this.
+			     For now, the proof point is that the phone visibly reacts to a shake. -->
 			<div
 				class="flex aspect-[3/4] w-full max-w-xs items-center justify-center rounded-lg border border-neutral-700/60 bg-neutral-900/60 text-center text-sm text-neutral-500"
 			>

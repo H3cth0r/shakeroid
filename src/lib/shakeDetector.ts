@@ -1,4 +1,4 @@
-// Shake detection + iOS motion permission handling (Phase 1).
+// Shake detection + iOS motion permission handling.
 //
 // iOS quirk (see spec §3.4): DeviceMotionEvent.requestPermission exists only on
 // iOS ≥ 13 Safari and must be called from a user gesture (a tap). Android and
@@ -19,10 +19,15 @@ export interface ShakeDetectionOptions {
 	onSample?: (sample: MotionSample) => void;
 	/** m/s² of (gravity-free) acceleration to count as a strong-enough jolt */
 	threshold?: number;
-	/** max gap between jolts within one shake */
-	shakeWindowMs?: number;
-	/** min time between two separate shakes */
+	/** safety gap against double-fires right after a detection */
 	cooldownMs?: number;
+	/**
+	 * the detector re-arms only when motion falls back under
+	 * threshold × rearmRatio — the valley between two shakes. This is what
+	 * makes a *continuous series* of shakes report each shake individually
+	 * (a plain burst-window detector misses all-but-one in a series)
+	 */
+	rearmRatio?: number;
 }
 
 /** True when the runtime requires the iOS permission dance. */
@@ -66,8 +71,14 @@ export async function requestMotionPermission(): Promise<MotionEventPermission> 
 }
 
 /**
- * Start listening for shakes. A shake = enough acceleration crossings within a
- * short window, with a cooldown so one shake can't fire repeatedly.
+ * Start listening for shakes.
+ *
+ * The detector is a two-level hysteresis switch:
+ *   1. fires when the gravity-free acceleration reaches `threshold` while armed
+ *   2. disarms immediately after a fire, and re-arms only once motion drops
+ *      below `threshold × rearmRatio` for `cooldownMs`
+ * One vigorous shake therefore fires exactly once, and a continuous series
+ * (shake-rest-shake…) is counted shake-by-shake.
  *
  * @param onShake called with the peak magnitude when a shake fires
  * @param options see {@link ShakeDetectionOptions}
@@ -75,10 +86,15 @@ export async function requestMotionPermission(): Promise<MotionEventPermission> 
  */
 export function startShakeDetection(
 	onShake: (magnitude: number) => void,
-	{ onSample, threshold = 12, shakeWindowMs = 450, cooldownMs = 1100 }: ShakeDetectionOptions = {}
+	{
+		onSample,
+		threshold = 12,
+		cooldownMs = 350,
+		rearmRatio = 0.3
+	}: ShakeDetectionOptions = {}
 ): () => void {
+	let armed = true;
 	let lastShakeAt = -Infinity;
-	let lastJoltAt = -Infinity;
 	let prevSample: { x: number; y: number; z: number } | null = null;
 
 	const handleMotion = (event: DeviceMotionEvent) => {
@@ -106,13 +122,14 @@ export function startShakeDetection(
 		onSample?.({ x, y, z, magnitude, ts });
 
 		if (magnitude >= threshold) {
-			const secondJolt = ts - lastJoltAt <= shakeWindowMs;
-			const cooledDown = ts - lastShakeAt >= cooldownMs;
-			if (secondJolt && cooledDown) {
+			if (armed && ts - lastShakeAt >= cooldownMs) {
 				lastShakeAt = ts;
+				armed = false;
 				onShake(magnitude);
 			}
-			lastJoltAt = ts;
+		} else if (magnitude <= threshold * rearmRatio && ts - lastShakeAt >= cooldownMs) {
+			// valley between shakes → ready for the next one
+			armed = true;
 		}
 	};
 

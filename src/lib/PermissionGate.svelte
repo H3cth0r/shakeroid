@@ -1,6 +1,6 @@
 <script lang="ts">
-	// Phase 1: the iOS permission gate. Shown until motion permission is granted;
-	// the actual permission call lives in the parent (page) via `onclick` so this
+	// The iOS permission gate: shown until motion permission is granted; the
+	// actual permission call lives in the parent (page) via `onclick` so this
 	// stays purely presentational.
 	interface Props {
 		busy?: boolean;
