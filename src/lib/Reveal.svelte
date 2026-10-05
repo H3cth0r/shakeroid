@@ -9,7 +9,8 @@
 
 	interface Props {
 		item: string | null; // null = nothing revealed yet
-		stage: RevealStage; // reported for completeness; visuals derive from progress
+		/** reported for completeness; visuals derive from progress */
+		stage?: RevealStage;
 		progress: number; // 0 → 1, driven by shakes
 	}
 	let { item, progress }: Props = $props();
