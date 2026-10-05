@@ -6,6 +6,17 @@
 export type TextItem = { type: 'text'; text: string };
 export type RevealItem = TextItem; // future: { type: 'visual' | 'image', ... }
 
+/**
+ * Stages of the "developing" ritual. Development is *shake-driven* (see
+ * Reveal.svelte): shakes deposit impulse as `progress` (0→1) and the ghost
+ * image clears as the user keeps shaking — the animation moves with the
+ * shakes, it is not a timer.
+ *  idle       → no reveal in flight
+ *  developing → 0 < progress < 1; shakes advance it
+ *  revealed   → progress = 1; next shake starts a fresh reveal
+ */
+export type RevealStage = 'idle' | 'developing' | 'revealed';
+
 export interface ContentPool {
 	items: RevealItem[];
 }

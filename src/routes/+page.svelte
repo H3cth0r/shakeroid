@@ -7,7 +7,7 @@
 		startShakeDetection,
 		type MotionSample
 	} from '#lib/shakeDetector';
-	import { makePool, createShuffleBag } from '#lib/reveal';
+	import { makePool, createShuffleBag, type RevealStage } from '#lib/reveal';
 	import contentPool from '#lib/contentPool.json';
 	import PermissionGate from '#lib/PermissionGate.svelte';
 	import Reveal from '#lib/Reveal.svelte';
@@ -24,9 +24,19 @@
 	// the phone visibly "knows" it was shaken: ambient background responds
 	let hue = $state(0);
 
-	// --- reveal engine (static swap for now; animation pass wraps later) ---
+	// --- reveal engine ---
 	const bag = createShuffleBag(makePool(contentPool.items));
 	let currentItem = $state<string | null>(null);
+
+	// shake-driven "developing" ritual: shakes deposit impulse as progress
+	// (energy-scaled: harder shakes advance more); a slow passive drift acts as
+	// a rescue path so a lone shake eventually resolves instead of freezing
+	let stage = $state<RevealStage>('idle');
+	let progress = $state(0);
+	let impulseBase = $state(0.16); // progress per shake (tuned up from 0.25: more shakes per reveal)
+	let energyBonus = $state(0.2); // extra impulse for high-energy shakes
+	let driftPerSecond = $state(0.05); // passive rescue drift while developing
+	let driftTimer: ReturnType<typeof setInterval> | null = null;
 
 	// --- dev harness (?dev=true + ?t=<threshold>) ---
 	let devMode = $state(false);
@@ -38,7 +48,15 @@
 		shakeCount++;
 		lastMagnitude = magnitude;
 		hue = (hue + 47) % 360; // rotate background hue on every detected shake
-		currentItem = bag.drawNext().text;
+
+		if (stage === 'revealed' || stage === 'idle') {
+			currentItem = bag.drawNext().text;
+			progress = 0;
+			stage = 'developing';
+		}
+		const energy = Math.min(1, Math.max(0, (magnitude - threshold) / threshold));
+		progress = Math.min(1, progress + impulseBase + energy * energyBonus);
+		if (progress >= 1) stage = 'revealed';
 	}
 
 	function restartDetection() {
@@ -82,6 +100,14 @@
 			screen = 'ready';
 			restartDetection();
 		}
+
+		// passive rescue drift: development creeps forward even without shakes
+		driftTimer = setInterval(() => {
+			if (stage === 'developing') {
+				progress = Math.min(1, progress + (driftPerSecond * 200) / 1000);
+				if (progress >= 1) stage = 'revealed';
+			}
+		}, 200);
 	});
 
 	// restart listener when the threshold is changed in the dev harness
@@ -92,6 +118,7 @@
 
 	$effect(() => {
 		return () => {
+			if (driftTimer) clearInterval(driftTimer);
 			stopDetection?.();
 			stopDetection = null;
 		};
@@ -118,7 +145,7 @@
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<Reveal item={currentItem} />
+			<Reveal item={currentItem} {progress} />
 		</div>
 	{/if}
 
@@ -138,11 +165,23 @@
 				<span>magnitude: {lastSample ? lastSample.magnitude.toFixed(1) : '—'}</span>
 				<span>last shake: {lastMagnitude ?? '—'}</span>
 				<span>shakes: {shakeCount}</span>
-				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length}</span>
+				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length} · progress: {Math.round(progress * 100)}% · {stage}</span>
 			</div>
 			<label class="mt-2 flex items-center gap-2">
 				threshold: <span class="font-mono">{threshold}</span> m/s²
 				<input class="w-40 accent-neutral-100" type="range" min="5" max="30" step="1" bind:value={threshold} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				shake impulse: <span class="font-mono">{impulseBase.toFixed(2)}</span>
+				<input class="w-40 accent-neutral-100" type="range" min="0.1" max="1" step="0.05" bind:value={impulseBase} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				energy bonus: <span class="font-mono">{energyBonus.toFixed(2)}</span>
+				<input class="w-40 accent-neutral-100" type="range" min="0" max="0.5" step="0.05" bind:value={energyBonus} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				rescue drift: <span class="font-mono">{driftPerSecond.toFixed(2)}</span>/s
+				<input class="w-40 accent-neutral-100" type="range" min="0" max="0.2" step="0.01" bind:value={driftPerSecond} />
 			</label>
 		</aside>
 	{/if}
