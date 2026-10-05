@@ -7,7 +7,7 @@
 		startShakeDetection,
 		type MotionSample
 	} from '#lib/shakeDetector';
-	import { makePool, createShuffleBag, type RevealStage } from '#lib/reveal';
+	import { makePool, createShuffleBag, type RevealStage, type RevealItem } from '#lib/reveal';
 	import contentPool from '#lib/contentPool.json';
 	import PermissionGate from '#lib/PermissionGate.svelte';
 	import Reveal from '#lib/Reveal.svelte';
@@ -26,7 +26,8 @@
 
 	// --- reveal engine ---
 	const bag = createShuffleBag(makePool(contentPool.items));
-	let currentItem = $state<string | null>(null);
+	let currentItem = $state<RevealItem | null>(null);
+	let visualRatio = $state(0.3); // dev-harness: odds of a visual reveal (tuned 30/70)
 
 	// shake-driven "developing" ritual: shakes deposit impulse as progress
 	// (energy-scaled: harder shakes advance more); a slow passive drift acts as
@@ -41,6 +42,7 @@
 	// --- dev harness (?dev=true + ?t=<threshold>) ---
 	let devMode = $state(false);
 	let threshold = $state(12);
+	let typeOverride = $state<'auto' | 'text' | 'visual'>('auto');
 
 	let stopDetection: (() => void) | null = null;
 
@@ -49,12 +51,19 @@
 		lastMagnitude = magnitude;
 		hue = (hue + 47) % 360; // rotate background hue on every detected shake
 
+		// energy of THIS shake: 0 at threshold, 1 at double — it both scales the
+		// impulse and seeds a visual item's composition when one is drawn
+		const energy = Math.min(1, Math.max(0, (magnitude - threshold) / threshold));
+
 		if (stage === 'revealed' || stage === 'idle') {
-			currentItem = bag.drawNext().text;
+			currentItem = bag.drawNext({
+				forceType: typeOverride === 'auto' ? undefined : typeOverride,
+				visualRatio,
+				energy
+			});
 			progress = 0;
 			stage = 'developing';
 		}
-		const energy = Math.min(1, Math.max(0, (magnitude - threshold) / threshold));
 		progress = Math.min(1, progress + impulseBase + energy * energyBonus);
 		if (progress >= 1) stage = 'revealed';
 	}
@@ -165,7 +174,7 @@
 				<span>magnitude: {lastSample ? lastSample.magnitude.toFixed(1) : '—'}</span>
 				<span>last shake: {lastMagnitude ?? '—'}</span>
 				<span>shakes: {shakeCount}</span>
-				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length} · progress: {Math.round(progress * 100)}% · {stage}</span>
+				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length} · progress: {Math.round(progress * 100)}% · {stage} · item: {currentItem?.type ?? '—'}{currentItem?.type === 'visual' ? ` (seed ${currentItem.seed}, e ${currentItem.energy.toFixed(2)})` : ''}</span>
 			</div>
 			<label class="mt-2 flex items-center gap-2">
 				threshold: <span class="font-mono">{threshold}</span> m/s²
@@ -182,6 +191,18 @@
 			<label class="mt-1 flex items-center gap-2">
 				rescue drift: <span class="font-mono">{driftPerSecond.toFixed(2)}</span>/s
 				<input class="w-40 accent-neutral-100" type="range" min="0" max="0.2" step="0.01" bind:value={driftPerSecond} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				visual ratio: <span class="font-mono">{Math.round(visualRatio * 100)}%</span>
+				<input class="w-40 accent-neutral-100" type="range" min="0" max="1" step="0.05" bind:value={visualRatio} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
+				force type:
+				<select class="rounded bg-neutral-800 px-2 py-0.5" bind:value={typeOverride}>
+					<option value="auto">auto (weighted mix)</option>
+					<option value="text">text only</option>
+					<option value="visual">visual only</option>
+				</select>
 			</label>
 		</aside>
 	{/if}

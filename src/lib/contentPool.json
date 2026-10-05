@@ -1,5 +1,5 @@
 {
-	"comment": "Shakeroid v0 reveal pool — text items only. One voice, one mood family (quiet, human moments) so the Phase 2 test measures the ritual, not content-type variance.",
+	"comment": "Shakeroid v1 reveal pool — 30 text items, one voice/mood family (quiet human moments). Phase 4 adds generated SVG visuals on top (30% of draws, energy-seeded); text pool expanded so text-only streaks still feel varied.",
 	"items": [
 		"A friend texted at 2am just to say they survived the day",
 		"Someone left a window open all night, just to hear the rain",
@@ -20,6 +20,16 @@
 		"A birthday candle relit, just for one more wish",
 		"The hour when shops close and streets belong to the streetlights",
 		"A note on a door: gone for water — back in five",
-		"The last sun on the wall of the tallest building, before the street goes blue"
+		"The last sun on the wall of the tallest building, before the street goes blue",
+		"A bicycle left by the flowerbed, basket still holding last week's daisies",
+		"A receipt stub for two coffees, found in a coat pocket of a coat you never wore",
+		"A dog waiting at the same window at the same hour, certain someone returns",
+		"Chalk letters on a pavement, half washed away by last night's rain",
+		"The smell of coffee climbing the stairwell, belonging to no one you know",
+		"A streetlamp left on all day, unnoticed",
+		"The last two words of a conversation overheard through a closing door",
+		"A jar of shells on a shelf, carried far from any sea",
+		"Train windows flickering past lit kitchens, each one a stranger's evening",
+		"A hat on a hook, shaped by years of one head"
 	]
 }
