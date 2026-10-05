@@ -21,7 +21,9 @@
 	let lastSample = $state<MotionSample | null>(null);
 	let sampleCount = $state(0);
 
-	// the phone visibly "knows" it was shaken: ambient background responds
+	// the phone visibly "knows" it was shaken: ambient background responds.
+	// The colour is painted on the document body (see effect below) so the
+	// canvas itself follows the rotation — Safari's top/bottom bands match.
 	let hue = $state(0);
 
 	// --- reveal engine ---
@@ -154,6 +156,15 @@
 		if (screen === 'ready') restartDetection();
 	});
 
+	// the canvas (body) follows the dynamic hue, so Safari's bands match —
+	// main itself stays transparent (layout.css comment for the full story)
+	$effect(() => {
+		document.body.style.backgroundColor = `hsl(${hue}, 35%, 12%)`;
+		return () => {
+			document.body.style.backgroundColor = '';
+		};
+	});
+
 	$effect(() => {
 		return () => {
 			if (driftTimer) clearInterval(driftTimer);
@@ -164,8 +175,7 @@
 </script>
 
 <main
-	class="flex min-h-screen flex-col items-center bg-neutral-950 text-neutral-100 transition-colors duration-700"
-	style="background-color: hsl({hue}, 35%, 12%)"
+	class="flex min-h-screen flex-col items-center bg-transparent text-neutral-100"
 >
 	{#if screen === 'gate' || screen === 'denied'}
 		<div class="flex flex-1 items-center w-full max-w-md">
