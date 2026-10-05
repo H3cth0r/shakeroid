@@ -13,7 +13,7 @@
 </script>
 
 <div
-	class="flex h-full flex-col items-center justify-center gap-6 px-6 text-center"
+	class="flex h-full w-full flex-col items-center justify-center gap-6 px-6 text-center"
 >
 	<p class="text-lg font-medium text-neutral-300">
 		{denied

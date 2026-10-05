@@ -1,1 +1,17 @@
 @import 'tailwindcss';
+
+/* The canvas follows the app's dynamic background: body's background-color is
+   driven from +page.svelte (same hue rotation as the UI), so Safari's top and
+   bottom bands — the dynamic toolbar area and the rubber-band overscroll —
+   follow the app while shaking. html keeps a static dark base (neutral-950)
+   only for the instant before the app has mounted. */
+html {
+	background-color: #0a0a0a; /* Tailwind neutral-950 */
+	margin: 0;
+}
+body {
+	margin: 0;
+	overscroll-behavior: none;
+	/* smooth the shake-driven hue rotation (was on <main> before it went transparent) */
+	transition: background-color 700ms ease;
+}
