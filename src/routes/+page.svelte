@@ -12,7 +12,7 @@
 	import PermissionGate from '#lib/PermissionGate.svelte';
 	import Reveal from '#lib/Reveal.svelte';
 
-	type PermissionState = 'starting' | 'gate' | 'ready' | 'denied' | 'unavailable';
+	type PermissionState = 'starting' | 'gate' | 'ready' | 'denied' | 'unavailable' | 'taps';
 	let screen = $state<PermissionState>('starting');
 
 	// --- shake detection wiring ---
@@ -51,21 +51,36 @@
 		lastMagnitude = magnitude;
 		hue = (hue + 47) % 360; // rotate background hue on every detected shake
 
+		// revealed is a RESTING state (user decision after device testing):
+		// accidental extra shakes must not destroy the revealed photograph —
+		// only the "next photograph" button leaves it
+		if (stage === 'revealed') return;
+
 		// energy of THIS shake: 0 at threshold, 1 at double — it both scales the
 		// impulse and seeds a visual item's composition when one is drawn
 		const energy = Math.min(1, Math.max(0, (magnitude - threshold) / threshold));
 
-		if (stage === 'revealed' || stage === 'idle') {
-			currentItem = bag.drawNext({
-				forceType: typeOverride === 'auto' ? undefined : typeOverride,
-				visualRatio,
-				energy
-			});
-			progress = 0;
-			stage = 'developing';
+		if (stage === 'idle') {
+			drawItem(energy);
 		}
 		progress = Math.min(1, progress + impulseBase + energy * energyBonus);
 		if (progress >= 1) stage = 'revealed';
+	}
+
+	function drawItem(energy: number) {
+		currentItem = bag.drawNext({
+			forceType: typeOverride === 'auto' ? undefined : typeOverride,
+			visualRatio,
+			energy
+		});
+		progress = 0;
+		stage = 'developing';
+	}
+
+	// the "next photograph" button (shown in the caption band once revealed):
+	// a deliberate act, so the resting state never ends by accident
+	function nextReveal() {
+		drawItem(0.5); // no shake to seed from — visual items draw at mid energy
 	}
 
 	function restartDetection() {
@@ -94,6 +109,20 @@
 		// dev-harness only: fires the shake handler directly, so the reveal UI can
 		// be built locally without a phone (context guide §8)
 		handleShake(99);
+	}
+
+	// tap fallback (spec §2.1): the granted-free path when motion permission is
+	// denied or absent — a tap acts as a shake at "mid" energy (threshold × 1.5
+	// keeps the same impulse/energy scaling, so the ritual feels identical)
+	function startTapMode() {
+		screen = 'taps';
+	}
+
+	function handleTap() {
+		// in tap mode the same button follows the ritual: start → develop →
+		// (as revealed) leave the resting state via next
+		if (stage === 'revealed') nextReveal();
+		else handleShake(threshold * 1.5);
 	}
 
 	onMount(() => {
@@ -144,17 +173,44 @@
 				busy={false}
 				denied={screen === 'denied'}
 				onclick={enableMotion}
+				onFallback={startTapMode}
 			/>
 		</div>
 	{:else if screen === 'unavailable'}
 		<div class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
 			<p class="text-lg text-neutral-300">Motion sensing isn't available here</p>
-			<p class="text-sm text-neutral-500">Open Shakeroid on a phone instead.</p>
+			<p class="text-sm text-neutral-500">Open Shakeroid on a phone instead — or tap below.</p>
+			<button
+				type="button"
+				class="mt-2 rounded-full bg-neutral-100 px-8 py-4 text-base font-semibold text-neutral-900 active:scale-95"
+				onclick={startTapMode}
+			>
+				tap to reveal instead
+			</button>
 		</div>
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<Reveal item={currentItem} {progress} />
+			<!-- the resting exit lives in the caption band; in tap mode the bottom
+			     button already plays that role, so don't show two of the same -->
+			<Reveal
+				item={currentItem}
+				{progress}
+				{stage}
+				onNext={screen === 'taps' ? undefined : nextReveal}
+			/>
+			{#if screen === 'taps'}
+				<button
+					type="button"
+					class="rounded-full bg-neutral-100 px-8 py-4 text-base font-semibold text-neutral-900 active:scale-95"
+					onclick={handleTap}
+				>
+					{stage === 'idle' ? 'tap to reveal' : stage === 'developing' ? 'tap to develop' : 'next photograph'}
+				</button>
+			{:else if stage === 'idle'}
+				<!-- onboarding: one line, self-explanatory for a stranger -->
+				<p class="animate-pulse text-sm text-neutral-400">shake your phone to develop a photograph</p>
+			{/if}
 		</div>
 	{/if}
 
