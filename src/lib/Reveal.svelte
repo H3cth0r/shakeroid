@@ -12,8 +12,9 @@
 		item: RevealItem | null; // null = nothing revealed yet
 		progress: number; // 0 → 1, driven by shakes
 		stage?: RevealStage; // caption microcopy follows the ritual stage
+		onNext?: () => void; // shown in the caption band once revealed (motion mode)
 	}
-	let { item, progress, stage = 'idle' }: Props = $props();
+	let { item, progress, stage = 'idle', onNext }: Props = $props();
 
 	const caption = $derived(stage === 'developing' ? 'developing…' : '');
 
@@ -55,8 +56,19 @@
 		</div>
 	</div>
 	<!-- caption band: like the handwritten note on a Polaroid, it tells the
-	     stranger what the ritual expects of them at each moment -->
+	     stranger what the ritual expects of them at each moment. Once revealed,
+	     the resting state can only be left on purpose — the next-shake button -->
 	<div class="h-14 flex items-center justify-center">
-		<p class="text-xs text-neutral-400 italic select-none">{caption}</p>
+		{#if stage === 'revealed' && onNext}
+			<button
+				type="button"
+				class="rounded-full bg-neutral-200 px-4 py-1 text-xs font-medium text-neutral-700 active:scale-95 active:bg-neutral-300"
+				onclick={onNext}
+			>
+				next photograph
+			</button>
+		{:else}
+			<p class="text-xs text-neutral-400 italic select-none">{caption}</p>
+		{/if}
 	</div>
 </div>
