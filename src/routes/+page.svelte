@@ -144,7 +144,7 @@
 	{:else}
 		<div class="flex flex-1 flex-col items-center justify-center gap-4 w-full max-w-md">
 			<h1 class="text-xl font-semibold tracking-tight">Shakeroid</h1>
-			<Reveal item={currentItem} {stage} {progress} />
+			<Reveal item={currentItem} {progress} />
 		</div>
 	{/if}
 

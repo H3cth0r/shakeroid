@@ -5,12 +5,8 @@
 	// physical effort. A pale emulsion layer fades out with the same progress, so
 	// the image appears to surface from beneath the undeveloped emulsion. A short
 	// CSS transition smooths each impulse into continuous motion.
-	import type { RevealStage } from './reveal';
-
 	interface Props {
 		item: string | null; // null = nothing revealed yet
-		/** reported for completeness; visuals derive from progress */
-		stage?: RevealStage;
 		progress: number; // 0 → 1, driven by shakes
 	}
 	let { item, progress }: Props = $props();
