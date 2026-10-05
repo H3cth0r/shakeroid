@@ -176,6 +176,10 @@
 				<input class="w-40 accent-neutral-100" type="range" min="0.1" max="1" step="0.05" bind:value={impulseBase} />
 			</label>
 			<label class="mt-1 flex items-center gap-2">
+				energy bonus: <span class="font-mono">{energyBonus.toFixed(2)}</span>
+				<input class="w-40 accent-neutral-100" type="range" min="0" max="0.5" step="0.05" bind:value={energyBonus} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
 				rescue drift: <span class="font-mono">{driftPerSecond.toFixed(2)}</span>/s
 				<input class="w-40 accent-neutral-100" type="range" min="0" max="0.2" step="0.01" bind:value={driftPerSecond} />
 			</label>
