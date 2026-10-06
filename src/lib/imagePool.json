@@ -1,0 +1,85 @@
+{
+	"comment": "Linked-picture pool: funny animal/gif moments pulled from public hosts, in their own mood family (loud, absurd) — a deliberate contrast to the quiet text pool so the reveal can surprise in two registers. Alts are short descriptions; URLs must respond over HTTPS with an image content-type (checked on the branch).",
+	"items": [
+		{
+			"url": "https://media.istockphoto.com/id/1160791767/photo/laughing-horse.jpg?s=612x612&w=0&k=20&c=_63iHrEConkZdSHORyIjOl7N4R4hxwKCZrwXmt8wptw=",
+			"alt": "a horse that looks like it is laughing"
+		},
+		{
+			"url": "https://t4.ftcdn.net/jpg/01/89/49/89/360_F_189498933_OeutsN0mMlzJGaJZJvkXIsoSCUCFIO7W.jpg",
+			"alt": "a candid animal photo"
+		},
+		{
+			"url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQShFVgbi1IXqTjeEwMO6qwTAA_4mNVdIOvoDN9dhrAxY7aFB59BqU_x6A&s=10",
+			"alt": "a small thumbnail of a funny picture"
+		},
+		{
+			"url": "https://media.tenor.com/nsQ57a43PG0AAAAM/funny-memes-woody.gif",
+			"alt": "a looping Woody meme gif"
+		},
+		{
+			"url": "https://media.tenor.com/7nFFLj6sjYkAAAAM/not-funny-eye-roll.gif",
+			"alt": "an unamused eye-roll gif"
+		},
+		{
+			"url": "https://i.pinimg.com/originals/2c/74/bb/2c74bb163971c2e93d170f8ca0a60e68.gif",
+			"alt": "a looping funny gif"
+		},
+		{
+			"url": "https://wiki.apolloautomation.com/assets/dancing-cat.gif",
+			"alt": "a dancing cat gif"
+		},
+		{
+			"url": "https://i.chzbgr.com/full/9487292928/hDB21DBDC/gif-baby-animal-hippo-in-a-shallow-pool-smelling-the-air",
+			"alt": "a baby hippo sniffing the air in a shallow pool"
+		},
+		{
+			"url": "https://www.picgifs.com/graphics/f/funny/graphics-funny-421114.gif",
+			"alt": "a small cartoon-style funny graphic"
+		},
+		{
+			"url": "https://i.chzbgr.com/full/9324114688/h88686473/brown-and-white-rabbit-drinks-from-a-rabbit-feeder",
+			"alt": "a rabbit drinking from its water bottle"
+		},
+		{
+			"url": "https://i.makeagif.com/media/5-30-2015/APJUtT.gif",
+			"alt": "a looping funny gif"
+		},
+		{
+			"url": "https://usagif.com/wp-content/uploads/gifs/cute-bunny-gif-25.gif",
+			"alt": "a cute bunny gif"
+		},
+		{
+			"url": "https://media1.giphy.com/media/H5C8CevNMbpBqNqFjl/200w.gif",
+			"alt": "a looping giphy gif"
+		},
+		{
+			"url": "https://media.tenor.com/TiPvQZ1l8-wAAAAM/nick-wilde-zootopia.gif",
+			"alt": "Nick Wilde from Zootopia in a looping gif"
+		},
+		{
+			"url": "https://i.pinimg.com/originals/d7/3e/4d/d73e4dce2bf98d60dc420a102ced8680.gif",
+			"alt": "a looping funny gif"
+		},
+		{
+			"url": "https://i.pinimg.com/originals/04/6c/94/046c9402848d9234130ac214d903ad08.gif",
+			"alt": "a looping funny gif"
+		},
+		{
+			"url": "https://edimakor.hitpaw.com/images/edimakor-2026/article/gif/lizard-meme.gif",
+			"alt": "a lizard meme gif"
+		},
+		{
+			"url": "https://jungleroots.com/wp-content/uploads/2022/11/giphy-1.gif",
+			"alt": "an animal gif"
+		},
+		{
+			"url": "https://media.giphy.com/media/29SqSyXlyO6WI/giphy.gif",
+			"alt": "a looping giphy gif"
+		},
+		{
+			"url": "https://memes.memedrop.io/production/DXV7866e8N29/source.gif",
+			"alt": "a meme gif"
+		}
+	]
+}

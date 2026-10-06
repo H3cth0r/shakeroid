@@ -16,13 +16,12 @@
 	}
 	let { item, progress, stage = 'idle', onNext }: Props = $props();
 
-	const caption = $derived(stage === 'developing' ? 'keep shaking…' : '');
-
 	const itemStyle = $derived(
 		`transition: opacity 350ms ease-out, filter 350ms ease-out; opacity: ${(0.1 + 0.9 * progress).toFixed(3)}; filter: blur(${(8 * (1 - progress)).toFixed(2)}px) saturate(${(0.25 + 0.75 * progress).toFixed(2)});`
 	);
 
 	const paleOpacity = $derived((1 - progress).toFixed(3));
+	const caption = $derived(stage === 'developing' ? 'keep shaking…' : '');
 </script>
 
 <div class="flex aspect-[4/5] w-full flex-col rounded-lg bg-white p-3 pb-0 shadow-2xl shadow-black/50">
@@ -36,15 +35,20 @@
 		<div class="absolute inset-0 flex items-center justify-center p-6">
 			{#if item !== null}
 				{#if item.type === 'visual'}
-					<!-- generated visual: the SVG fills the inner surface; @html is safe
-					     here — makeVisual() output is built entirely in code, never from
-					     user input -->
+					<!-- generated visual: the SVG fills the inner surface; the
+					     no-at-html-tags rule is disabled for this file in eslint.config.js
+					     (the markup is built entirely in code, never from user input) -->
 					<div class="absolute inset-0" style={itemStyle}>
-						<!-- no-at-html-tags is disabled for this file in eslint.config.js:
-						     makeVisual output is built entirely in code (never from user
-						     input), so the injected markup is trusted by construction -->
 						{@html makeVisual(item.seed, item.energy)}
 					</div>
+				{:else if item.type === 'image'}
+					<!-- linked picture/gif: fills the inner surface like a print -->
+					<img
+						src={item.url}
+						alt={item.alt}
+						class="absolute inset-0 h-full w-full rounded-sm object-cover"
+						style={itemStyle}
+					/>
 				{:else}
 					<p class="font-serif text-lg leading-snug text-neutral-100 italic" style={itemStyle}>
 						{item.text}
