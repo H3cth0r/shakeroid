@@ -7,8 +7,16 @@
 		startShakeDetection,
 		type MotionSample
 	} from '#lib/shakeDetector';
-	import { makePool, createShuffleBag, type RevealStage, type RevealItem } from '#lib/reveal';
+	import {
+		makePool,
+		makeImagePool,
+		createShuffleBag,
+		type RevealStage,
+		type RevealItem,
+		type ImageItem
+	} from '#lib/reveal';
 	import contentPool from '#lib/contentPool.json';
+	import imagePoolData from '#lib/imagePool.json';
 	import PermissionGate from '#lib/PermissionGate.svelte';
 	import Reveal from '#lib/Reveal.svelte';
 
@@ -27,9 +35,11 @@
 	let hue = $state(0);
 
 	// --- reveal engine ---
-	const bag = createShuffleBag(makePool(contentPool.items));
+	const pictures: ImageItem[] = makeImagePool(imagePoolData.items);
+	const bag = createShuffleBag(makePool(contentPool.items), pictures);
 	let currentItem = $state<RevealItem | null>(null);
-	let visualRatio = $state(0.3); // dev-harness: odds of a visual reveal (tuned 30/70)
+	let visualRatio = $state(0.3); // dev harness: odds of a generated visual (tuned 30/70)
+	let imageRatio = $state(0.2); // dev harness: odds of a linked picture (tuned 20/80)
 
 	// shake-driven "developing" ritual: shakes deposit impulse as progress
 	// (energy-scaled: harder shakes advance more); a slow passive drift acts as
@@ -44,7 +54,7 @@
 	// --- dev harness (?dev=true + ?t=<threshold>) ---
 	let devMode = $state(false);
 	let threshold = $state(12);
-	let typeOverride = $state<'auto' | 'text' | 'visual'>('auto');
+	let typeOverride = $state<'auto' | 'text' | 'visual' | 'image'>('auto');
 
 	let stopDetection: (() => void) | null = null;
 
@@ -73,6 +83,7 @@
 		currentItem = bag.drawNext({
 			forceType: typeOverride === 'auto' ? undefined : typeOverride,
 			visualRatio,
+			imageRatio,
 			energy
 		});
 		progress = 0;
@@ -148,6 +159,13 @@
 				if (progress >= 1) stage = 'revealed';
 			}
 		}, 200);
+
+		// eager-load the picture pool: the first drawn gif/picture should not
+		// arrive mid-develop as an empty frame (host cdns are slow at times)
+		for (const picture of pictures) {
+			const img = new Image();
+			img.src = picture.url;
+		}
 	});
 
 	// restart listener when the threshold is changed in the dev harness
@@ -240,7 +258,7 @@
 				<span>magnitude: {lastSample ? lastSample.magnitude.toFixed(1) : '—'}</span>
 				<span>last shake: {lastMagnitude ?? '—'}</span>
 				<span>shakes: {shakeCount}</span>
-				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length} · progress: {Math.round(progress * 100)}% · {stage} · item: {currentItem?.type ?? '—'}{currentItem?.type === 'visual' ? ` (seed ${currentItem.seed}, e ${currentItem.energy.toFixed(2)})` : ''}</span>
+				<span class="col-span-2">pool left: {bag.remaining()} / {contentPool.items.length} · progress: {Math.round(progress * 100)}% · {stage} · item: {currentItem?.type ?? '—'}{currentItem?.type === 'visual' ? ` (seed ${currentItem.seed}, e ${currentItem.energy.toFixed(2)})` : ''}{currentItem?.type === 'image' ? ' (linked picture)' : ''}</span>
 			</div>
 			<label class="mt-2 flex items-center gap-2">
 				threshold: <span class="font-mono">{threshold}</span> m/s²
@@ -263,11 +281,16 @@
 				<input class="w-40 accent-neutral-100" type="range" min="0" max="1" step="0.05" bind:value={visualRatio} />
 			</label>
 			<label class="mt-1 flex items-center gap-2">
+				picture ratio: <span class="font-mono">{Math.round(imageRatio * 100)}%</span>
+				<input class="w-40 accent-neutral-100" type="range" min="0" max="1" step="0.05" bind:value={imageRatio} />
+			</label>
+			<label class="mt-1 flex items-center gap-2">
 				force type:
 				<select class="rounded bg-neutral-800 px-2 py-0.5" bind:value={typeOverride}>
 					<option value="auto">auto (weighted mix)</option>
 					<option value="text">text only</option>
 					<option value="visual">visual only</option>
+					<option value="image">picture only</option>
 				</select>
 			</label>
 		</aside>
