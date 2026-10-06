@@ -31,6 +31,15 @@ export default defineConfig(
 		}
 	},
 	{
+		// Reveal.svelte injects the generated SVG via {@html}. The markup is built
+		// entirely in code (generative.ts) — never from user input — so the XSS
+		// risk the rule guards against is not present here.
+		files: ['**/Reveal.svelte'],
+		rules: {
+			'svelte/no-at-html-tags': 'off'
+		}
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}
