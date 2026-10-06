@@ -1,16 +1,16 @@
-// Reveal engine (v1): two content types now ride the same ritual.
-//  - text items come from a shuffled "bag" (no repeats until exhausted)
-//  - visual items are generated on the spot from a seed that encodes the
-//    developing shake's energy, so they are unique in principle yet
-//    reproducible (see generative.ts)
-// Both are drawn through this single choke point: drawNext() owns the
-// text-bag discipline and the visual/text weighted mix.
+// Reveal engine (v2): three content types ride the same ritual.
+//  - text items: a shuffled "bag" (no repeats until exhausted)
+//  - visual items: generated on the spot from a seed that encodes the
+//    developing shake's energy (see generative.ts)
+//  - image items: linked pictures/gifs from a fixed URL pool
+// drawNext() stays the single choke point and owns the weighted mix.
 
 import { makeVisualSeed } from '#lib/generative';
 
 export type TextItem = { type: 'text'; text: string };
 export type VisualItem = { type: 'visual'; seed: number; energy: number };
-export type RevealItem = TextItem | VisualItem;
+export type ImageItem = { type: 'image'; url: string; alt: string };
+export type RevealItem = TextItem | VisualItem | ImageItem;
 
 /**
  * Stages of the "developing" ritual. Development is *shake-driven* (see
@@ -19,7 +19,7 @@ export type RevealItem = TextItem | VisualItem;
  * shakes, it is not a timer.
  *  idle       → no reveal in flight
  *  developing → 0 < progress < 1; shakes advance it
- *  revealed   → progress = 1; next shake starts a fresh reveal
+ *  revealed   → progress = 1; a *resting state*: only the next button leaves it
  */
 export type RevealStage = 'idle' | 'developing' | 'revealed';
 
@@ -27,21 +27,28 @@ export interface ContentPool {
 	items: RevealItem[];
 }
 
-/** Wrap a raw JSON pool (v0: plain strings) into the internal item model. */
+/** Wrap a raw JSON pool (plain strings) into the internal text-item model. */
 export function makePool(texts: string[]): ContentPool {
 	return { items: texts.map((text) => ({ type: 'text', text }) as TextItem) };
 }
 
+/** Wrap a linked-picture pool ({url, alt}) into internal image items. */
+export function makeImagePool(entries: { url: string; alt: string }[]): ImageItem[] {
+	return entries.map((entry) => ({ type: 'image', url: entry.url, alt: entry.alt }));
+}
+
 export interface DrawOptions {
-	/** Dev-harness override: 'text' or 'visual' forces the next draw's type. */
-	forceType?: 'text' | 'visual';
-	/** Odds of a visual draw when no override is set (tuned: 0.3). */
+	/** Dev-harness override: forces the next draw's type. */
+	forceType?: 'text' | 'visual' | 'image';
+	/** Odds of a generated-vis draw when no override is set (tuned: 0.3). */
 	visualRatio?: number;
-	/** Energy of the triggering shake — seeds the visual's composition. */
+	/** Odds of a linked-picture draw when pictures are available (tuned: 0.2). */
+	imageRatio?: number;
+	/** Energy of the triggering shake — seeds a generated visual's composition. */
 	energy?: number;
 }
 
-export function createShuffleBag(pool: ContentPool) {
+export function createShuffleBag(pool: ContentPool, pictures: ImageItem[] = []) {
 	let bag: TextItem[] = [];
 
 	function refill() {
@@ -61,11 +68,22 @@ export function createShuffleBag(pool: ContentPool) {
 	}
 
 	return {
-		/** Draw the next reveal, mixing types with `options` (defaults: 30% visual). */
+		/**
+		 * Draw the next reveal, mixing types with `options`.
+		 * Weights (no override): pictures 0.2, generated visuals 0.3, text the rest.
+		 * Falls through to text if a pool is empty.
+		 */
 		drawNext(options: DrawOptions = {}): RevealItem {
-			const ratio = options.visualRatio ?? 0.3;
-			const wantVisual =
-				options.forceType === 'visual' ? true : options.forceType === 'text' ? false : Math.random() < ratio;
+			const forced = options.forceType;
+			// one uniform roll partitions the odds: [0,image) | [i,i+v) | rest
+			const imageOdds = pictures.length > 0 ? (options.imageRatio ?? 0.2) : 0;
+			const visualOdds = imageOdds + (options.visualRatio ?? 0.3);
+			const roll = Math.random();
+			const wantImage = forced ? forced === 'image' : roll < imageOdds;
+			if (wantImage && pictures.length > 0) {
+				return pictures[Math.floor(Math.random() * pictures.length)];
+			}
+			const wantVisual = forced ? forced === 'visual' : roll < visualOdds;
 			if (wantVisual) {
 				const energy = options.energy ?? 0.5;
 				return { type: 'visual', seed: makeVisualSeed(energy), energy };
